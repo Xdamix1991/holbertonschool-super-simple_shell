@@ -5,10 +5,10 @@
 int main(void)
 {
 	/* Commande à exécuter et ses arguments */
-    char *argv[] = {"/bin/ls", "-l", NULL};
+	char *argv[] = {"/bin/ls", "-l", NULL};
 
 	/* Variables d'environnement (optionnelles, ici NULL) */
-    char *envp[] = {NULL};
+	char *envp[] = {NULL};
 
 	/* Remplace le processus courant par le programme spécifié par argv[0] */
 	if (execve(argv[0], argv, envp) == -1)
