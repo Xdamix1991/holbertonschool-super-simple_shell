@@ -2,19 +2,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "main.h"
 #include <sys/wait.h>
 
-int main(void)
+int s_s_shell(char *command, int max_argument)
 
 {
-	char *argv[] = {"/bin/ls", "-l", "/tmp", NULL};
-	char *envp[] = {NULL};
-	pid_t pid;
-	int i;
-	int statut;
 
-	for (i = 0; i < 5; i++)
+	command = split_string();
+
+
+
+	for (i = 0; i < max_argument; i++)
 	{
 		pid = fork();
 		printf("pid: %d\n", pid);

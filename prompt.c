@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "main.h"
 
 int main(void)
 
@@ -11,11 +12,12 @@ int main(void)
 	size_t len;
 
 	buffer = NULL;
+	size_t nread;
 	len = 0;
 
 
-	getline(&buffer, &len, stdin);
-	printf("%s\n", buffer);
+	nread = getline(&buffer, &len, stdin);
+	rintf("%s\n", buffer);
 
 	free(buffer);
 	return(0);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "main.h"
 #define BUFFER_SIZE 1024
 
 char *get_current_path(void)

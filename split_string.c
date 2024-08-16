@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "main.h"
 
-int main(void)
+int *split_string(void)
 
 {
 	char *buffer;
@@ -13,20 +14,24 @@ int main(void)
 	size_t nread;
 	len = 0;
 
-	nread = getline(&buffer, &len, stdin);
-	printf("%s\n", buffer);
-
-	if (nread == -1)
+	while (1)
 	{
-		exit;
+		printf("§ ");
+		nread = getline(&buffer, &len, stdin);
+
+		if (nread == -1)
+		{
+			break;
+		}
+
+		token = strtok(buffer, " ");
+		while (token != NULL)
+		{
+			printf("Token: %s\n", token);
+			token = strtok(NULL, " ");
+		}
 	}
 
-	token = strtok(buffer, " ");
-	while (token != NULL)
-	{
-		printf("Token: %s\n", token);
-		token = strtok(NULL, " ");
-	}
 	free(buffer);
-	return (0);
+	return (token);
 }

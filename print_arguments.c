@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-int main(int ac, char **av)
+#include "main.h"
+
+int arguments(int ac, char **av)
 {
 	int i;
 	while (*av != NULL)
