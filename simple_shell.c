@@ -10,8 +10,6 @@ int s_s_shell(char *command, int max_argument)
 
 	command = split_string();
 
-
-
 	for (i = 0; i < max_argument; i++)
 	{
 		pid = fork();

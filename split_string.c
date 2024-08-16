@@ -3,7 +3,7 @@
 #include <string.h>
 #include "main.h"
 
-int *split_string(void)
+char *split_string(void)
 
 {
 	char *buffer;
