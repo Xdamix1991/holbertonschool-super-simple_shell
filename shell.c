@@ -13,6 +13,8 @@ char **split_string(int max_argument)
 	char *buffer = NULL;
 	size_t len = 0;
 	ssize_t nread;
+	char *token;
+	int i = 0;
 
 	printf("§ ");
 	nread = getline(&buffer, &len, stdin);
@@ -21,6 +23,7 @@ char **split_string(int max_argument)
 		free(buffer);
 		return (NULL);
 	}
+	printf("1-debogage: %s\n", buffer);
 
 	/** Supprimer le retour à la ligne (\n) en fin de commande */
 	buffer[strcspn(buffer, "\n")] = '\0';
@@ -33,19 +36,37 @@ char **split_string(int max_argument)
 	}
 
 	char **argv = malloc(max_argument * sizeof(char *));
-	char *token;
-	int i = 0;
+	if (argv == NULL)
+	{
+		perror("malloc");
+		free(buffer);
+		exit(EXIT_FAILURE);
+	}
+
+	printf("2-debogage\n"); /** Debogae */
 
 	token = strtok(buffer, " \n");
 	while (token != NULL && i < max_argument - 1)
 	{
-		argv[i] = token;
+		argv[i] = strdup(token); /** *chaînes sont dupliquées */
+		if (argv[i] == NULL)
+		{
+			perror("strdup");
+			free(buffer);
+			for (int j = 0; j < i; j++) /** *Nettoyer la mémoire déjà allouée */
+				free(argv[j]);
+			free(argv);
+			exit(EXIT_FAILURE);
+		}
+		printf("argv[%d] = %s\n", i, argv[i]); /** Débogage */
 		i++;
 		token = strtok(NULL, " \n");
 	}
 	argv[i] = NULL;
 
-	/**Note : Pas besoin de libérer `buffer` ici car les pointeurs `argv[i]`*/
+	free(buffer);
+
+	printf("3-debogage\n"); /** Debogae */
 
 	return (argv);
 }
@@ -53,15 +74,30 @@ char **split_string(int max_argument)
 /** Fonction pour trouver le chemin complet d'une commande */
 char *find_command_path(char *command)
 {
+	/** verifier si la commande est entré avec un chemin "command[0]""*/
+	if (command[0] == '/' && access(command, X_OK) == 0)
+	{
+		return strdup(command);
+	}
+	
 	char *path_env = getenv("PATH");
 	if (path_env == NULL)
 	{
 		return (NULL); // PATH n'existe pas
 	}
 
+	printf("PATH: %s\n", path_env); /** Debogae */
+
 	char *path = strdup(path_env);		 /** Copier PATH pour le manipuler */
 	char *directory = strtok(path, ":"); /** séparer les chemins de variables */
 	char *full_path = malloc(1024);		 /** Buffer pour stocker le chemin complet */
+
+	if (full_path == NULL)
+	{
+		perror("malloc");
+		free(path);
+		return NULL;
+	}
 
 	while (directory != NULL)
 	{
@@ -71,6 +107,8 @@ char *find_command_path(char *command)
 		// Ajouter un slash et la commande au chemin
 		strcat(full_path, "/");
 		strcat(full_path, command);
+
+		printf("Testing path: %s\n", full_path); /** débogage */
 
 		// Vérifier si le fichier existe et est exécutable
 		if (access(full_path, X_OK) == 0)
@@ -95,12 +133,17 @@ int s_s_shell(int max_argument)
 	int status;
 
 	char **argv = split_string(max_argument);
+
 	if (argv == NULL || argv[0] == NULL)
 	{
 		free(argv);
 		return (-1); /* pas de commande*/
 	}
 
+	for (int i = 0; argv[i] != NULL; i++)
+	{
+		printf("argv[%d] = %s\n", i, argv[i]); /** débogage */
+	}
 	char *command_path = find_command_path(argv[0]);
 	if (command_path == NULL)
 	{
@@ -117,7 +160,7 @@ int s_s_shell(int max_argument)
 		free(command_path);
 		exit(EXIT_FAILURE);
 	}
-
+	printf("hello\n");
 	if (pid == 0)
 	{
 		/** Processus enfant */
@@ -140,6 +183,7 @@ int s_s_shell(int max_argument)
 }
 
 int main()
+
 {
 	while (1)
 	{
