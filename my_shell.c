@@ -16,8 +16,13 @@ char **split_string(int max_argument, char *command)
 	if (command != NULL)
 	{
 		buffer = strdup(command); /* Créé une copie de la commande */
+		if (buffer == NULL)
+		{
+			perror("Erreur lors de la duplication de la commande");
+			return (NULL);
+		}
 	}
-	else
+		else
 	{
 
 		/* Mode interactif : Lire la commande depuis l'entrée standard */
@@ -29,6 +34,7 @@ char **split_string(int max_argument, char *command)
 		nread = getline(&buffer, &len, stdin);
 		if (nread == -1)
 		{
+			perror("Erreur lors de la lecture de la ligne de commande");
 			free(buffer);
 			return (NULL);
 		}
@@ -45,19 +51,37 @@ char **split_string(int max_argument, char *command)
 	}
 
 	char **argv = malloc(max_argument * sizeof(char *));
+	if(argv == NULL)
+	{
+		perror("Erreur lors de l'allocation mémoire pour argv");
+		free(buffer);
+		return (NULL);
+	}
+
 	char *token;
 	int i = 0;
 
 	token = strtok(buffer, " \n");
 	while (token != NULL && i < max_argument - 1)
 	{
-		argv[i] = token;
+		argv[i] = strdup(token); /* Duplique chaque token */
+		if (argv[i] == NULL)
+		{
+			perror("Erreur lors de la duplication du token");
+			for (int j = 0; j < i; j++)
+			{
+				free(argv[j]);
+			}
+			free(argv);
+			free(buffer);
+			return (NULL);
+		}
 		i++;
 		token = strtok(NULL, " \n");
 	}
 	argv[i] = NULL;
 
-	/**Note : Pas besoin de libérer `buffer` ici car les pointeurs `argv[i]`*/
+	free(buffer); /* On peut maintant libérer buffer */
 
 	return (argv);
 }
@@ -68,18 +92,28 @@ char *find_command_path(char *command)
 	char *path_env = getenv("PATH");
 	if (path_env == NULL)
 	{
+		perror("Erreur : path non défini");
 		return (NULL); // PATH n'existe pas
 	}
 
 	char *path = strdup(path_env);		 /** Copier PATH pour le manipuler */
-	char *directory = strtok(path, ":"); /** séparer les chemins de variables */
+	if (path == NULL)
+	{
+		perror("Erreur lors de la duplication de PATH");
+		return (NULL);
+	}
 	char *full_path = malloc(1024);		 /** Buffer pour stocker le chemin complet */
-
+	if (full_path == NULL)
+	{
+		free (path);
+		perror("Erreur lors de l'allocation mémoire full_path");
+		return (NULL);
+	}
+	char *directory = strtok(path, ":"); /** séparer les chemins de variables */
 	while (directory != NULL)
 	{
 		// Copier le répertoire actuel dans full_path
 		strcpy(full_path, directory);
-
 		// Ajouter un slash et la commande au chemin
 		strcat(full_path, "/");
 		strcat(full_path, command);
@@ -100,6 +134,18 @@ char *find_command_path(char *command)
 	return (NULL); /**Commande non trouvée dans les répertoires de PATH */
 }
 
+void free_argv(char **argv)
+{
+	if (argv != NULL)
+	{
+		for (int i = 0; argv[i] != NULL; i++)
+		{
+			free(argv[i]); /*Libère chaque chaine */
+		}
+		free(argv); /* Libère le tableau de pointeurs */
+	}
+}
+
 /** Fonction pour exécuter la commande*/
 int s_s_shell(int max_argument)
 {
@@ -109,7 +155,7 @@ int s_s_shell(int max_argument)
 	char **argv = split_string(max_argument, NULL);
 	if (argv == NULL || argv[0] == NULL)
 	{
-		free(argv);
+		free_argv(argv);
 		return (-1); /* pas de commande*/
 	}
 
@@ -117,7 +163,7 @@ int s_s_shell(int max_argument)
 	if (command_path == NULL)
 	{
 		printf("Commande introuvable : %s\n", argv[0]);
-		free(argv);
+		free_argv(argv);
 		return -1;
 	}
 
@@ -125,7 +171,7 @@ int s_s_shell(int max_argument)
 	if (pid == -1)
 	{
 		perror("Erreur lors du fork");
-		free(argv);
+		free_argv(argv);
 		free(command_path);
 		exit(EXIT_FAILURE);
 	}
@@ -135,7 +181,7 @@ int s_s_shell(int max_argument)
 		/** Processus enfant */
 		execv(command_path, argv);
 		perror("Erreur lors de execve");
-		free(argv);
+		free_argv(argv);
 		free(command_path);
 		exit(EXIT_FAILURE);
 	}
@@ -146,7 +192,7 @@ int s_s_shell(int max_argument)
 		printf("Statut du processus fils : %d\n", WEXITSTATUS(status));
 	}
 
-	free(argv);
+	free_argv(argv);
 	free(command_path);
 	return 0;
 }
@@ -165,18 +211,22 @@ int main(int argc, char *argv[])
 			strcat(command, argv[i]);
 		}
 		char **argv_non_interactif = split_string(MAX_ARGUMENTS, command);
+		if (argv_non_interactif == NULL)
+		{
+			perror("Erreur lors de la création des arguments non-interactifs");
+			return (-1);
+		}
 		char *command_path = find_command_path(argv_non_interactif[0]);
-
 		if (command_path == NULL)
 		{
 			printf("Commande introuvable : %s\n", argv_non_interactif[0]);
-			free(argv_non_interactif);
+			free_argv(argv_non_interactif);
 			return (-1);
 		}
 
 		execv(command_path, argv_non_interactif);
 		perror("erreur lors execve");
-		free(argv_non_interactif);
+		free_argv(argv_non_interactif);
 		free(command_path);
 		exit(EXIT_FAILURE);
 	}
