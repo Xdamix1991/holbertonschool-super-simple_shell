@@ -50,7 +50,7 @@ char **split_string(int max_argument)
 	return (argv);
 }
 
-// Fonction pour trouver le chemin complet d'une commande
+/** Fonction pour trouver le chemin complet d'une commande */
 char *find_command_path(char *command)
 {
 	char *path_env = getenv("PATH");
